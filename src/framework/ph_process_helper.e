@@ -140,8 +140,12 @@ feature -- Basic Operations
 		end
 
 	taskkill_by_image_name (a_name: STRING)
+			-- Kill a process by `a_name'.
+			-- 	(if it exists)
 		do
-			taskkill (tasklist.item (a_name).pid, True, True)
+			if attached tasklist.item (a_name) as al_list then
+				taskkill (al_list.pid, True, True)
+			end
 		end
 
 	taskkill (a_pid: INTEGER; a_opt_t, a_opt_f: BOOLEAN)
@@ -171,7 +175,7 @@ feature -- Basic Operations
 			-- ^                       ^ ^      ^ ^              ^ ^         ^ ^          ^
 			-- 1-25					     27-34    36-51            53-63       65-76
 		local
-			l_output, l_line, l_image_name, l_session_name: STRING
+			l_output, l_image_name, l_session_name: STRING
 			l_list: LIST [STRING]
 			i, l_pid, l_session, l_mem_usage: INTEGER
 		do
@@ -184,13 +188,12 @@ feature -- Basic Operations
 			until
 				l_list.off
 			loop
-				if i > 2 then
-					l_line := l_list.item_for_iteration
-					l_image_name := l_line.substring (1, 25)
-					l_pid := l_line.substring (27, 34).to_integer
-					l_session_name := l_line.substring (36, 51)
-					l_session := l_line.substring (53, 63).to_integer
-					l_mem_usage := l_line.substring (65, 76).to_integer
+				if i > 2 and then attached l_list.item_for_iteration as al_line and then not al_line.is_empty then
+					l_image_name := al_line.substring (1, 25)
+					l_pid := al_line.substring (27, 34).to_integer
+					l_session_name := al_line.substring (36, 51)
+					l_session := al_line.substring (53, 63).to_integer
+					l_mem_usage := al_line.substring (65, 76).to_integer
 					Result.put ([l_image_name, l_pid, l_session_name, l_session, l_mem_usage], l_image_name)
 				end
 				l_list.forth
