@@ -91,12 +91,12 @@ feature -- Basic Operations
 				end
 			end
 			internal_process := (create {BASE_PROCESS_FACTORY}).process_launcher (l_cmd, l_args, a_directory)
-			if attached internal_process as al_process then
-				last_pid := al_process.id
+			check attached internal_process as al_process then
 				al_process.set_hidden (True)
 				al_process.redirect_output_to_stream
 				al_process.redirect_error_to_same_as_output
 				al_process.launch
+				last_pid := al_process.id
 			end
 		end
 
@@ -152,10 +152,12 @@ feature -- Basic Operations
 			-- /t = Ends the specified process and any child processes started by it.
 			-- /f = Specifies that processes be forcefully ended. This parameter
 			--	is ignored for remote processes; all remote processes are forcefully ended.
+		require
+			positive: a_pid > 0
 		local
 			l_cmd: STRING
 		do
-			l_cmd := "taskkill /pid"
+			l_cmd := "taskkill /pid "
 			l_cmd.append_string_general (a_pid.out)
 			if a_opt_t then
 				l_cmd.append_string_general (" /t")
@@ -164,7 +166,9 @@ feature -- Basic Operations
 				l_cmd.append_string_general (" /f")
 			end
 			process_command (l_cmd, Void)
-			started_pids.remove_by_value (a_pid)
+			if started_pids.values.has (a_pid) then
+				started_pids.remove_by_value (a_pid)
+			end
 		end
 
 	tasklist: TREE_MAP [TUPLE [image_name: STRING; pid: INTEGER; session_name: STRING; session_no, mem_usuage: INTEGER], STRING]
